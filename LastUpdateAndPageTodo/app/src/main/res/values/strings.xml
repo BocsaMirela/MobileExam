@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">ExamenTodo</string>
+    <string name="offline">OFFLINE</string>
+    <string name="online">ONLINE</string>
+    <string name="loading">Loading</string>
+    <string name="retry">RETRY</string>
+    <string name="update">UPDATE</string>
+    <string name="merge">MERGE</string>
+    <string name="failed">Loading failed - retry</string>
+    <string name="failedUp">Uploading failed</string>
+    <string name="uploading">Uploading</string>
+    <string-array name="task_statusActive">
+        <item>active</item>
+        <item>archived</item>
+    </string-array>
+    <string-array name="task_statusArchived">
+        <item>archived</item>
+        <item>active</item>
+    </string-array>
+</resources>
