@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
+import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.GridLayoutManager
@@ -50,6 +51,8 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     private var more: Boolean = true
     private var currentPage: Int = 1
     private lateinit var mInternetAvailabilityChecker: InternetAvailabilityChecker
+    val listOfCalls = ArrayList<Call<List<Event>>>()
+    val listOfAsyncTask = ArrayList<AsyncTask<Void, Void, List<Event>>>()
     private val ADDED = 1
 
 
@@ -96,7 +99,9 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
 
     private fun populateListFromLocal() {
-        val items = eventViewModel.getAllEvents()
+        val asynctask = LoadAsyncTask(eventViewModel)
+        val items = asynctask.execute().get()
+        listOfAsyncTask.add(asynctask)
         if (items.isNotEmpty()) {
             adapter.setEventsList(items)
             adapter.notifyDataSetChanged()
@@ -134,14 +139,15 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     }
 
     private fun getDataFromServer() {
-        eventViewModel.getAllEventsFromServer().enqueue(object : Callback<List<Event>> {
+        val call: Call<List<Event>> = eventViewModel.getAllEventsFromServer()
+        call.enqueue(object : Callback<List<Event>> {
             override fun onResponse(call: Call<List<Event>>, response: Response<List<Event>>) {
                 response.body()?.also {
+                    eventViewModel.deleteAllEvents()
 
                     it.forEach { event ->
                         eventViewModel.addEvent(event)
                     }
-
                     eventViewModel.items.value = it
 
                     progressBar.visibility = View.GONE
@@ -197,13 +203,14 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
                 val groupListType = object : TypeToken<Event>() {}.type
                 val event = gson.fromJson<Event>(s, groupListType)
 
-                eventViewModel.addEvent(event)
+                if (!adapter.getEventsList().contains(event)) {
+                    eventViewModel.addEvent(event)
+                    val items = adapter.getEventsList() as ArrayList
+                    items.add(event)
 
+                    eventViewModel.items.value = items
+                }
 
-                val items = adapter.getEventsList() as ArrayList
-                items.add(event)
-
-                eventViewModel.items.value = items
             }
 
 
@@ -228,14 +235,6 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
             netStatusTextView.text = getString(R.string.online)
 //            retry(null)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-//        mInternetAvailabilityChecker
-//            .removeInternetConnectivityChangeListener(this)
-        Log.e(" on create ", "Main activity was created")
-
     }
 
     private fun checkIfIsConnected(): Boolean {
@@ -293,12 +292,13 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
                 txtView.visibility = View.GONE
 
                 val eventR = response.body()!!
-                val items = adapter.getEventsList() as ArrayList
-                val ind1 = items.indexOf(eventR)
-                items.add(ind1, eventR)
-                eventViewModel.items.value = items
+                if (!adapter.getEventsList().contains(eventR)) {
+                    val items = adapter.getEventsList() as ArrayList<Event>
+                    items.add(eventR)
+                    eventViewModel.items.value = items
 
-                eventViewModel.addEvent(eventR)
+                    eventViewModel.addEvent(eventR)
+                }
 
             }
         })
@@ -325,6 +325,35 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     override fun onStop() {
         super.onStop()
         Log.e(" on stop ", "Main activity on stop")
+        listOfCalls.forEach { call -> call.cancel() }
+        listOfAsyncTask.forEach { task ->
+            if (task.status != AsyncTask.Status.FINISHED) task.cancel(true)
+        }
+        listOfCalls.removeAll { true }
+        listOfAsyncTask.removeAll { true }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mInternetAvailabilityChecker.removeInternetConnectivityChangeListener(this)
+        Log.e(" on destroy ", "Main activity was created")
+        listOfCalls.forEach { call -> call.cancel() }
+        listOfAsyncTask.forEach { task ->
+            if (task.status != AsyncTask.Status.FINISHED) task.cancel(true)
+        }
+        listOfCalls.removeAll { true }
+        listOfAsyncTask.removeAll { true }
+
+
+    }
+
+    private class LoadAsyncTask(val eventViewModel: EventsViewModel) : AsyncTask<Void, Void, List<Event>>() {
+        override fun doInBackground(vararg params: Void?): List<Event> {
+            val choco = eventViewModel.getAllEvents()
+            Log.e(" getting ", "Getting events from DB")
+            return choco
+        }
 
     }
 }

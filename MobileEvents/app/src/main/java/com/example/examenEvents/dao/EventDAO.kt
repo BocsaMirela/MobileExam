@@ -25,4 +25,7 @@ interface EventDAO {
     @Update
     fun update(chocolate: Event)
 
+    @Query("DELETE FROM items")
+    fun deleteAll()
+
 }

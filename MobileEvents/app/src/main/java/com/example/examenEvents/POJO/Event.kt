@@ -4,16 +4,17 @@ import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
 import android.os.Parcel
 import android.os.Parcelable
+import java.util.*
 
 @Entity(tableName = "items")
-class Event(@PrimaryKey var id: Int, var text: String,var date: String) :
+class Event(@PrimaryKey var id: Int, var text: String,var date: Date) :
     Parcelable {
 
 
     constructor(parcel: Parcel) : this(
         parcel.readInt(),
         parcel.readString(),
-        parcel.readString()
+        Date(parcel.readLong())
     ) {
     }
 
@@ -24,7 +25,7 @@ class Event(@PrimaryKey var id: Int, var text: String,var date: String) :
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(id)
         parcel.writeString(text)
-        parcel.writeString(date)
+        parcel.writeLong(date.time)
     }
 
     override fun describeContents(): Int {

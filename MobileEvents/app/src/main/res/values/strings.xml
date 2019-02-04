@@ -10,6 +10,7 @@
     <string name="failedUp">Saving failed</string>
     <string name="uploading">Saving</string>
     <string name="add">ADD</string>
+    <string name="chooseDate">Touch to choose date</string>
     <string-array name="task_statusActive">
         <item>active</item>
         <item>archived</item>

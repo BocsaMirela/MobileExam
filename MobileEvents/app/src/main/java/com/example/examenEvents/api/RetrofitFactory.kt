@@ -21,21 +21,27 @@ class RetrofitFactory {
 
     fun getRetrofitInstance(): Retrofit {
 
-        val builder = GsonBuilder()
-            .registerTypeAdapter(Date::class.java, object : JsonDeserializer<Date> {
-                @Throws(JsonParseException::class)
-                override fun deserialize(
-                    jsonElement: JsonElement,
-                    type: Type,
-                    context: JsonDeserializationContext
-                ): Date {
-                    return Date(jsonElement.asJsonPrimitive.asLong)
-                }
-            })
+//        val builder = GsonBuilder()
+//            .registerTypeAdapter(Date::class.java, object : JsonDeserializer<Date> {
+//                @Throws(JsonParseException::class)
+//                override fun deserialize(
+//                    jsonElement: JsonElement,
+//                    type: Type,
+//                    context: JsonDeserializationContext
+//                ): Date {
+//                    val string=jsonElement.asJsonPrimitive.asString
+//                    val ind=string.indexOf("T")
+//                    val date=string.substring(0,ind-1)
+//                    return Date(date)
+//                }
+//            })
+//            .create()
+        val gson = GsonBuilder()
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
             .create()
         return Retrofit.Builder().client(okHttpClientBuilder.build())
             .baseUrl(API.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(builder))
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

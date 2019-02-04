@@ -102,6 +102,9 @@ class EventsViewModel(application: Application) : ViewModel() {
         return eventRepository.deleteEvent(event)
     }
 
+    fun deleteAllEvents() {
+        return eventRepository.deleteAll()
+    }
     fun updateEvent(event: Event) {
         eventRepository.updateEvent(event)
     }

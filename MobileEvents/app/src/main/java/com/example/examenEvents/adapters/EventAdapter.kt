@@ -43,7 +43,7 @@ class EventAdapter : RecyclerView.Adapter<EventAdapter.ViewHolder>() {
     override fun onBindViewHolder(viewHolder: ViewHolder, p: Int) {
         val event = eventsList[p]
         viewHolder.txtDescription.text = event.text
-        viewHolder.txtData.text = event.date
+        viewHolder.txtData.text =formatDate(event.date)
 
     }
 

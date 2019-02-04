@@ -8,13 +8,16 @@ import java.lang.Exception
 class EventRepository(private val eventDAO: EventDAO) {
 
     fun getAllEvents(): List<Event> {
-        return LoadAsyncTask(eventDAO).execute().get()
+        return eventDAO.getEvents()
     }
 
     fun deleteEvent(event: Event) {
         DeleteAsyncTask(eventDAO).execute(event)
     }
 
+    fun deleteAll() {
+        DeleteAllAsyncTask(eventDAO).execute()
+    }
     fun updateEvent(event: Event) {
         UpdateAsyncTask(eventDAO).execute(event)
     }
@@ -81,6 +84,18 @@ class EventRepository(private val eventDAO: EventDAO) {
                 e.printStackTrace()
                 false
             }
+        }
+    }
+
+    private class DeleteAllAsyncTask(val eventDAOEvent: EventDAO) :
+        AsyncTask<Void, Void, Void>() {
+        override fun doInBackground(vararg params: Void?): Void? {
+            try {
+                eventDAOEvent.deleteAll()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            return null
         }
     }
 
