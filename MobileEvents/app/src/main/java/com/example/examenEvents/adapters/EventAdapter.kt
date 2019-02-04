@@ -1,31 +1,31 @@
-package com.example.examenTodos.adapters
+package com.example.examenEvents.adapters
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.example.examenTodos.POJO.Todo
-import com.example.examenTodos.R
-import com.example.examenTodos.Utils.OnClickInterface
+import com.example.examenEvents.POJO.Event
+import com.example.examenEvents.R
+import com.example.examenEvents.Utils.OnClickInterface
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
 
-class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>() {
-    private var todosList: List<Todo> = ArrayList()
+class EventAdapter : RecyclerView.Adapter<EventAdapter.ViewHolder>() {
+    private var eventsList: List<Event> = ArrayList()
     private val TITLE = 0
     private val LOAD_MORE = 1
     var clickListener: OnClickInterface? = null
 
 
-    fun setTodosList(list: List<Todo>) {
-        todosList = list
+    fun setEventsList(list: List<Event>) {
+        eventsList = list
     }
 
-    fun getTodosList(): List<Todo> {
-        return todosList
+    fun getEventsList(): List<Event> {
+        return eventsList
     }
 
 
@@ -37,14 +37,13 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>() {
     }
 
     override fun getItemCount(): Int {
-        return todosList.size
+        return eventsList.size
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, p: Int) {
-        val event = todosList[p]
+        val event = eventsList[p]
         viewHolder.txtDescription.text = event.text
-        viewHolder.txtData.text = formatDate(Date(event.updated))
-        viewHolder.txtStatus.text = "Status: " + event.status
+        viewHolder.txtData.text = event.date
 
     }
 
@@ -53,7 +52,6 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolder>() {
 
         var txtDescription: TextView = view.findViewById(R.id.chocolateDescription)
         var txtData: TextView = view.findViewById(R.id.chocolateData)
-        var txtStatus: TextView = view.findViewById(R.id.chocolateStatus)
 
         init {
             view.setOnClickListener(this)

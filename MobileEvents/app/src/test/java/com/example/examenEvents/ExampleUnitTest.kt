@@ -1,4 +1,4 @@
-package com.example.examenTodos
+package com.example.examenEvents
 
 import org.junit.Test
 

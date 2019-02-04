@@ -1,4 +1,4 @@
-package com.example.examenTodos.api
+package com.example.examenEvents.api
 
 import com.google.gson.*
 import okhttp3.OkHttpClient

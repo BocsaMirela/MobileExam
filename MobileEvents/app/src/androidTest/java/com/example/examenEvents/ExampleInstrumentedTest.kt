@@ -1,4 +1,4 @@
-package com.example.examenTodos
+package com.example.examenEvents
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4

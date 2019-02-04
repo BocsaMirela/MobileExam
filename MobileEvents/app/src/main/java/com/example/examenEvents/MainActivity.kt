@@ -1,10 +1,9 @@
-package com.example.examenTodos
+package com.example.examenEvents
 
 import android.app.Activity
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
@@ -14,43 +13,33 @@ import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.View
-import com.example.examenTodos.POJO.Todo
-import com.example.examenTodos.adapters.TodoAdapter
-import com.example.examenTodos.viewModel.TodosViewModel
+import com.example.examenEvents.adapters.EventAdapter
+import com.example.examenEvents.viewModel.EventsViewModel
 import android.os.Build
 import android.support.v7.app.AlertDialog
-import android.text.Editable
-import android.text.TextWatcher
-import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import com.example.examenTodos.POJO.ServerResponse
-import com.example.examenTodos.Utils.OnClickInterface
-import com.example.examenTodos.api.API
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.example.examenEvents.POJO.Event
+import com.example.examenEvents.Utils.OnClickInterface
+import com.example.examenEvents.api.API
 import com.treebo.internetavailabilitychecker.InternetAvailabilityChecker
 import com.treebo.internetavailabilitychecker.InternetConnectivityListener
-import kotlinx.android.synthetic.main.activity_main.*
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
-import org.json.JSONArray
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.net.URI
 import java.net.URISyntaxException
-import java.util.*
 import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickInterface {
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewManager: RecyclerView.LayoutManager
-    private lateinit var adapter: TodoAdapter
-    private lateinit var todoViewModel: TodosViewModel
+    private lateinit var adapter: EventAdapter
+    private lateinit var eventViewModel: EventsViewModel
     private lateinit var loadingTextView: TextView
     private lateinit var netStatusTextView: TextView
     private lateinit var progressBar: ProgressBar
@@ -71,15 +60,15 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     }
 
     private fun initialize() {
-        todoViewModel = ViewModelProviders.of(this, TodosViewModel.Factory(application))
-            .get(TodosViewModel::class.java)
+        eventViewModel = ViewModelProviders.of(this, EventsViewModel.Factory(application))
+            .get(EventsViewModel::class.java)
 
         recyclerView = this.findViewById(R.id.recyclerViewId)
         viewManager = GridLayoutManager(this@MainActivity, 1)
         recyclerView.layoutManager = viewManager
         recyclerView.setHasFixedSize(true)
 
-        adapter = TodoAdapter()
+        adapter = EventAdapter()
         recyclerView.adapter = adapter
         adapter.setOnClickListener(this)
 
@@ -94,22 +83,21 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
         populateListFromLocal()
 
-//        internetConnectionStatus()
+        internetConnectionStatus()
 
-        getDataFromServer()
+//        getDataFromServer()
 
-//        addListenerForConnectionChanged()
+        addListenerForConnectionChanged()
 
     }
 
 
     private fun populateListFromLocal() {
-        val items = todoViewModel.getAllTodos()
+        val items = eventViewModel.getAllEvents()
         if (items.isNotEmpty()) {
-            adapter.setTodosList(items)
+            adapter.setEventsList(items)
             adapter.notifyDataSetChanged()
-            maxM = items[0].updated
-        } else maxM = 0
+        }
     }
 
     private fun addListenerForConnectionChanged() {
@@ -121,25 +109,20 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         if (checkIfIsConnected()) {
             netStatusTextView.visibility = View.VISIBLE
             netStatusTextView.text = getString(R.string.online)
-
-            loadingTextView.visibility = View.VISIBLE
-            progressBar.visibility = View.VISIBLE
-
-            getDataFromServer()
         } else {
             netStatusTextView.visibility = View.VISIBLE
             netStatusTextView.text = getString(R.string.offline)
-
-            loadingTextView.visibility = View.GONE
-            progressBar.visibility = View.GONE
         }
+        loadingTextView.visibility = View.VISIBLE
+        progressBar.visibility = View.VISIBLE
+        getDataFromServer()
     }
 
     private fun observerForLiveData() {
-        todoViewModel.items.observe(this, Observer { events ->
+        eventViewModel.items.observe(this, Observer { events ->
             Log.e(" obs bun ", events?.size.toString())
             events?.also {
-                adapter.setTodosList(events)
+                adapter.setEventsList(events)
                 adapter.notifyDataSetChanged()
                 Log.e(" obs bun", " invisible true ")
             }
@@ -148,51 +131,40 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     }
 
     private fun getDataFromServer() {
-        todoViewModel.getTodosFromServerUpdatedAndPaginated(maxM, currentPage)
-            .enqueue(object : Callback<ServerResponse> {
-                override fun onResponse(call: Call<ServerResponse>, response: Response<ServerResponse>) {
-                    response.body()?.also {
-                        more = it.more
-                        currentPage = it.page
-                        val items = it.items
-//                        val oldItems = adapter.getTodosList() as ArrayList
-                        val oldItems = ArrayList(adapter.getTodosList())
+        eventViewModel.getAllEventsFromServer().enqueue(object : Callback<List<Event>> {
+            override fun onResponse(call: Call<List<Event>>, response: Response<List<Event>>) {
+                response.body()?.also {
+                    val oldItems = ArrayList(adapter.getEventsList())
 
-                        //if last updated is missing just add all to local and adapter
-                        items.forEach { todo ->
-                            run {
-                                todoViewModel.addTodo(todo)
+                    it.forEach { event ->
+                        run {
+                            eventViewModel.addEvent(event)
 
-                                if (oldItems.contains(todo)) {
-                                    oldItems.remove(todo)
-                                    oldItems.add(todo)
-                                } else {
-                                    oldItems.add(todo)
-                                }
+                            if (oldItems.contains(event)) {
+                                oldItems.remove(event)
+                                oldItems.add(event)
+                            } else {
+                                oldItems.add(event)
                             }
                         }
-
-                        todoViewModel.items.value = oldItems
-
-                        currentPage++
-                        if (!more) {
-                            progressBar.visibility = View.GONE
-                            loadingTextView.visibility = View.GONE
-
-                        } else getDataFromServer()
                     }
 
+                    eventViewModel.items.value = oldItems
 
-                }
-
-                override fun onFailure(call: Call<ServerResponse>, t: Throwable) {
-                    Toast.makeText(applicationContext, "Cannot load data from server", Toast.LENGTH_LONG).show()
-
-                    loadingTextView.text = getString(R.string.failed)
                     progressBar.visibility = View.GONE
+                    loadingTextView.visibility = View.GONE
 
                 }
-            })
+            }
+
+            override fun onFailure(call: Call<List<Event>>, t: Throwable) {
+                Toast.makeText(applicationContext, "Cannot load data from server", Toast.LENGTH_LONG).show()
+//                loadingTextView.text = getString(R.string.failed)
+                loadingTextView.visibility = View.GONE
+                progressBar.visibility = View.GONE
+
+            }
+        })
     }
 
     private fun createDialogErrorMessage(message: String) {
@@ -245,14 +217,14 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
 
     override fun onInternetConnectivityChanged(isConnected: Boolean) {
-//        if (!isConnected) {
-//            netStatusTextView.text = getString(R.string.offline)
-//            loadingTextView.visibility = View.GONE
-//            progressBar.visibility = View.GONE
-//        } else {
-//            netStatusTextView.text = getString(R.string.online)
+        if (!isConnected) {
+            netStatusTextView.text = getString(R.string.offline)
+            loadingTextView.visibility = View.GONE
+            progressBar.visibility = View.GONE
+        } else {
+            netStatusTextView.text = getString(R.string.online)
 //            retry(null)
-//        }
+        }
     }
 
     override fun onDestroy() {
@@ -269,9 +241,9 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
     override fun onClick(view: View, position: Int) {
         val intent = Intent(this, DetailsActivity::class.java)
-        val todo = adapter.getTodosList()[position]
+        val event = adapter.getEventsList()[position]
 
-        intent.putExtra("item", todo)
+        intent.putExtra("item", event)
         startActivityForResult(intent, UPDATED)
     }
 
@@ -279,13 +251,13 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         if (requestCode == UPDATED) {
             if (resultCode == Activity.RESULT_OK) {
                 data?.apply {
-                    val todo = data.getParcelableExtra<Todo>("item")
+                    val event = data.getParcelableExtra<Event>("item")
 
                     val txtView = findViewById<TextView>(R.id.uploading)
                     txtView.visibility = View.VISIBLE
                     txtView.text = getString(R.string.uploading)
 
-                    updateTodo(todo)
+                    updateEvent(event)
 
                 }
             }
@@ -293,24 +265,24 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
     }
 
-    private fun updateTodo(todo: Todo) {
-        todoViewModel.updateTodoServer(todo).enqueue(object : Callback<Todo> {
-            override fun onFailure(call: Call<Todo>, t: Throwable) {
+    private fun updateEvent(event: Event) {
+        eventViewModel.updateEventServer(event).enqueue(object : Callback<Event> {
+            override fun onFailure(call: Call<Event>, t: Throwable) {
                 val txtView = findViewById<TextView>(R.id.uploading)
                 txtView.visibility = View.GONE
                 createDialogErrorMessage("Uploading failed ${t.message}")
             }
 
-            override fun onResponse(call: Call<Todo>, response: Response<Todo>) {
+            override fun onResponse(call: Call<Event>, response: Response<Event>) {
                 val txtView = findViewById<TextView>(R.id.uploading)
                 txtView.visibility = View.GONE
 
-                val todoR = response.body()!!
-                val items = adapter.getTodosList() as ArrayList
-                val ind1 = items.indexOf(todoR)
-                items.remove(todoR)
-                items.add(ind1, todoR)
-                todoViewModel.items.value = items
+                val eventR = response.body()!!
+                val items = adapter.getEventsList() as ArrayList
+                val ind1 = items.indexOf(eventR)
+                items.remove(eventR)
+                items.add(ind1, eventR)
+                eventViewModel.items.value = items
 
             }
         })

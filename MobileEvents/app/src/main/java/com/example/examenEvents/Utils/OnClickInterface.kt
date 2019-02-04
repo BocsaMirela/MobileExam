@@ -1,4 +1,4 @@
-package com.example.examenTodos.Utils
+package com.example.examenEvents.Utils
 
 import android.view.View
 
