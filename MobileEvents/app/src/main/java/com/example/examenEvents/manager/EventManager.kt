@@ -1,5 +1,6 @@
 package com.example.examenEvents.manager
 
+import android.util.Log
 import com.example.examenEvents.POJO.Event
 import com.example.examenEvents.api.API
 import com.example.examenEvents.api.RetrofitFactory
@@ -11,14 +12,16 @@ class EventManager {
         .getRetrofitInstance().create(API::class.java)
 
     fun getAllEventsServer(): Call<List<Event>> {
+        Log.e(" getting ", "Getting events from server")
         return api.getEvents()
     }
 
-    fun getAllEventsServerUpdated(m: Long,nrPage:Int): Call<Event> {
-        return api.getEventsPaginated(m,nrPage)
+    fun getAllEventsServerUpdated(m: Long, nrPage: Int): Call<Event> {
+        return api.getEventsPaginated(m, nrPage)
     }
 
     fun addEventServer(event: Event): Call<Event> {
+        Log.e(" adding ", "add event to server")
         return api.addEvent(event)
     }
 

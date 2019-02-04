@@ -18,6 +18,7 @@ class EventRepository(private val eventDAO: EventDAO) {
     fun updateEvent(event: Event) {
         UpdateAsyncTask(eventDAO).execute(event)
     }
+
     fun addEvent(event: Event): Long {
         return AddAsyncTask(eventDAO).execute(event).get()
     }
@@ -38,7 +39,7 @@ class EventRepository(private val eventDAO: EventDAO) {
         AsyncTask<Void, Void, List<Event>>() {
         override fun doInBackground(vararg params: Void?): List<Event> {
             val choco = eventDAOEvent.getEvents()
-            Log.e(" from db all ", choco.size.toString())
+            Log.e(" getting ", "Getting events from DB")
             return choco
         }
 
@@ -48,6 +49,7 @@ class EventRepository(private val eventDAO: EventDAO) {
         AsyncTask<Event, Void, Long>() {
         override fun doInBackground(vararg params: Event?): Long {
             return try {
+                Log.e(" adding ", "insert event to db")
                 eventDAOEvent.insert(params[0]!!)
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -59,6 +59,7 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         InternetAvailabilityChecker.init(this)
         initialize()
         connectWebSocket()
+        Log.e(" on create ", "Main activity was created")
     }
 
     private fun initialize() {
@@ -198,6 +199,7 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
                 eventViewModel.addEvent(event)
 
+
                 val items = adapter.getEventsList() as ArrayList
                 items.add(event)
 
@@ -232,6 +234,8 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         super.onDestroy()
 //        mInternetAvailabilityChecker
 //            .removeInternetConnectivityChangeListener(this)
+        Log.e(" on create ", "Main activity was created")
+
     }
 
     private fun checkIfIsConnected(): Boolean {
@@ -300,4 +304,27 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         })
     }
 
+    override fun onStart() {
+        super.onStart()
+        Log.e(" on start ", "Main activity on start")
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.e(" on resume ", "Main activity on resume")
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.e(" on pause ", "Main activity on pause")
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.e(" on stop ", "Main activity on stop")
+
+    }
 }
