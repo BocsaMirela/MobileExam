@@ -7,8 +7,9 @@
     <string name="update">UPDATE</string>
     <string name="merge">MERGE</string>
     <string name="failed">Loading failed - retry</string>
-    <string name="failedUp">Uploading failed</string>
-    <string name="uploading">Uploading</string>
+    <string name="failedUp">Saving failed</string>
+    <string name="uploading">Saving</string>
+    <string name="add">ADD</string>
     <string-array name="task_statusActive">
         <item>active</item>
         <item>archived</item>

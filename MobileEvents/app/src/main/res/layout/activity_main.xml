@@ -86,4 +86,16 @@
 
     </android.support.v7.widget.RecyclerView>
 
+    <android.support.design.widget.FloatingActionButton
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:clickable="true"
+            app:srcCompat="@drawable/ic_add_circle_black_24dp"
+            android:id="@+id/floatingActionButton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_margin="30dp"
+            android:onClick="onAdd"
+            android:focusable="true"/>
+
 </android.support.constraint.ConstraintLayout>

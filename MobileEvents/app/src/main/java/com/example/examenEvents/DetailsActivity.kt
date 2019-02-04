@@ -12,15 +12,13 @@ import com.example.examenEvents.viewModel.EventsViewModel
 import java.util.*
 
 class DetailsActivity : AppCompatActivity() {
-    private lateinit var event: Event
+    private var id: Int = 0
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.details_layout)
-        val item = intent.getParcelableExtra<Event>("item")
-        intentUI(item)
-
+        id = intent.getIntExtra("id",0)
     }
 
 
@@ -29,7 +27,6 @@ class DetailsActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.textViewId).text = item.id.toString()
             findViewById<TextView>(R.id.textViewText).text = item.text
             findViewById<TextView>(R.id.textViewTextData).text = item.date
-            event = item
 
 
         }
@@ -38,7 +35,9 @@ class DetailsActivity : AppCompatActivity() {
 
     fun onUpdate(v: View) {
         val text = findViewById<EditText>(R.id.textViewText).text.toString()
-        event.text = text
+        val data = findViewById<EditText>(R.id.textViewTextData).text.toString()
+
+        val event = Event(id, text, data)
         val resultIntent = Intent()
         resultIntent.putExtra("item", event)
         setResult(Activity.RESULT_OK, resultIntent)

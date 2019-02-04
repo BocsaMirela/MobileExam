@@ -32,24 +32,8 @@ class EventsViewModel(application: Application) : ViewModel() {
         return eventManager.getAllEventsServer()
     }
 
-    fun addEventServer(context: Context, event: Event) {
-//        eventManager.addEventServer(event).enqueue(object : Callback<Event> {
-//            override fun onFailure(call: Call<Event>, t: Throwable) {
-//                Toast.makeText(
-//                    context,
-//                    "Something went wrong or no connection! The new event will be saved in your local data",
-//                    Toast.LENGTH_LONG
-//                ).show()
-//            }
-//
-//            override fun onResponse(call: Call<Event>, response: Response<Event>) {
-//                Toast.makeText(context, "Add was done", Toast.LENGTH_LONG).show()
-//                val listOfItems = items.value as ArrayList<Event>
-//                listOfItems.add(event)
-//                items.value = listOfItems
-//            }
-//
-//        })
+    fun addEventServer(event: Event): Call<Event> {
+        return eventManager.addEventServer(event)
     }
 
     fun deleteEventServer(id: Int, context: Context) {

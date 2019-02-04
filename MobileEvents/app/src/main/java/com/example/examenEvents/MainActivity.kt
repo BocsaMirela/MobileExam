@@ -23,6 +23,8 @@ import android.widget.Toast
 import com.example.examenEvents.POJO.Event
 import com.example.examenEvents.Utils.OnClickInterface
 import com.example.examenEvents.api.API
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.treebo.internetavailabilitychecker.InternetAvailabilityChecker
 import com.treebo.internetavailabilitychecker.InternetConnectivityListener
 import org.java_websocket.client.WebSocketClient
@@ -48,7 +50,7 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     private var more: Boolean = true
     private var currentPage: Int = 1
     private lateinit var mInternetAvailabilityChecker: InternetAvailabilityChecker
-    private val UPDATED = 1
+    private val ADDED = 1
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +87,7 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
         internetConnectionStatus()
 
-//        getDataFromServer()
+        getDataFromServer()
 
         addListenerForConnectionChanged()
 
@@ -115,7 +117,7 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         }
         loadingTextView.visibility = View.VISIBLE
         progressBar.visibility = View.VISIBLE
-        getDataFromServer()
+
     }
 
     private fun observerForLiveData() {
@@ -134,22 +136,12 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
         eventViewModel.getAllEventsFromServer().enqueue(object : Callback<List<Event>> {
             override fun onResponse(call: Call<List<Event>>, response: Response<List<Event>>) {
                 response.body()?.also {
-                    val oldItems = ArrayList(adapter.getEventsList())
 
                     it.forEach { event ->
-                        run {
-                            eventViewModel.addEvent(event)
-
-                            if (oldItems.contains(event)) {
-                                oldItems.remove(event)
-                                oldItems.add(event)
-                            } else {
-                                oldItems.add(event)
-                            }
-                        }
+                        eventViewModel.addEvent(event)
                     }
 
-                    eventViewModel.items.value = oldItems
+                    eventViewModel.items.value = it
 
                     progressBar.visibility = View.GONE
                     loadingTextView.visibility = View.GONE
@@ -200,7 +192,16 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
             }
 
             override fun onMessage(s: String) {
+                val gson = Gson()
+                val groupListType = object : TypeToken<Event>() {}.type
+                val event = gson.fromJson<Event>(s, groupListType)
 
+                eventViewModel.addEvent(event)
+
+                val items = adapter.getEventsList() as ArrayList
+                items.add(event)
+
+                eventViewModel.items.value = items
             }
 
 
@@ -240,15 +241,25 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
     }
 
     override fun onClick(view: View, position: Int) {
-        val intent = Intent(this, DetailsActivity::class.java)
-        val event = adapter.getEventsList()[position]
+//        val intent = Intent(this, DetailsActivity::class.java)
+//        val event = adapter.getEventsList()[position]
+//
+//        intent.putExtra("item", event)
+//        startActivityForResult(intent, ADDED)
+    }
 
-        intent.putExtra("item", event)
-        startActivityForResult(intent, UPDATED)
+    fun onAdd(v: View) {
+        if (!checkIfIsConnected()) {
+            createDialogErrorMessage("You are not connected! \n Connect to internet and try again")
+        } else {
+            val intent = Intent(this, DetailsActivity::class.java)
+            intent.putExtra("id", 0)
+            startActivityForResult(intent, ADDED)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == UPDATED) {
+        if (requestCode == ADDED) {
             if (resultCode == Activity.RESULT_OK) {
                 data?.apply {
                     val event = data.getParcelableExtra<Event>("item")
@@ -257,7 +268,7 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
                     txtView.visibility = View.VISIBLE
                     txtView.text = getString(R.string.uploading)
 
-                    updateEvent(event)
+                    addEvent(event)
 
                 }
             }
@@ -265,12 +276,12 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
 
     }
 
-    private fun updateEvent(event: Event) {
-        eventViewModel.updateEventServer(event).enqueue(object : Callback<Event> {
+    private fun addEvent(event: Event) {
+        eventViewModel.addEventServer(event).enqueue(object : Callback<Event> {
             override fun onFailure(call: Call<Event>, t: Throwable) {
                 val txtView = findViewById<TextView>(R.id.uploading)
                 txtView.visibility = View.GONE
-                createDialogErrorMessage("Uploading failed ${t.message}")
+                createDialogErrorMessage("Saving failed ${t.message}")
             }
 
             override fun onResponse(call: Call<Event>, response: Response<Event>) {
@@ -280,9 +291,10 @@ class MainActivity : AppCompatActivity(), InternetConnectivityListener, OnClickI
                 val eventR = response.body()!!
                 val items = adapter.getEventsList() as ArrayList
                 val ind1 = items.indexOf(eventR)
-                items.remove(eventR)
                 items.add(ind1, eventR)
                 eventViewModel.items.value = items
+
+                eventViewModel.addEvent(eventR)
 
             }
         })
